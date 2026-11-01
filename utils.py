@@ -8,6 +8,7 @@ import torch
 import json
 from datetime import datetime
 from pathlib import Path
+import csv
 
 
 def set_seed(seed):
@@ -29,3 +30,13 @@ def save_config(config, run_dir):
     """Save the run's settings as config.json inside its folder."""
     with open(run_dir/"config.json","w") as f:
         json.dump(config,f,indent=2)
+
+def log_metrics(run_dir,row):
+    """Append one row to metrics.csv, writing the column names first if the file is new"""
+    path = run_dir/"metrics.csv"
+    is_new = not path.exists()
+    with open(path,"a",newline="") as f:
+        writer = csv.DictWriter(f,fieldnames=list(row.keys()))
+        if is_new:
+            writer.writeheader()
+        writer.writerow(row)
