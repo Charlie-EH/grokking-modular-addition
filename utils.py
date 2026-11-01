@@ -40,3 +40,15 @@ def log_metrics(run_dir,row):
         if is_new:
             writer.writeheader()
         writer.writerow(row)
+
+def save_checkpoint(model,run_dir,epoch):
+    """Save the model's weights at this epoch into run's checkpoints folder."""
+    path = run_dir/"checkpoints"/f"epoch_{epoch:06d}.pt"
+    torch.save(model.state_dict(),path)
+    return path
+
+def load_checkpoint(model,path):
+    """Load saved weights from a checkpoint file inot a model of the same shape."""
+    state = torch.load(path,map_location="cpu")
+    model.load_state_dict(state)
+    return model
