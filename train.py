@@ -1,55 +1,46 @@
+"""
+Train the Stage 1 MLP on modular addition; save config, metrics and checkpoints.
+Reference: grokking-main notebook, cell "3. Training".
+"""
 import torch
 from torch import nn
+from torch.utils.data import DataLoader
 
 from config import CONFIG
+from data import make_data
+from model import MLP
 from utils import set_seed, make_run_dir, save_config, log_metrics, save_checkpoint
 
-# 1. Set the seed from CONFIG.
-seed = set_seed(CONFIG["seed"])
 
-# 2. Make the run folder and save the config into it.
-run_dir = make_run_dir(CONFIG)
-save_config(CONFIG, run_dir)
-
-# 3. Fake data: 200 random points with 2 features each, target y = 3*x1 - 2*x2.
-#    Use the first 150 as train, the last 50 as test.
-X = torch.randn(200,2)
-y = 3*X[:,:1]-2*X[:,1:]
-X_train, y_train = X[:150],y[:150]
-X_test, y_test= X[150:],y[150:] # colons split data into test and train
-assert y.shape ==(200,1)
-
-# 4. Model, loss function and optimizer (AdamW, with lr and weight_decay from CONFIG).
-model = nn.Linear(in_features=2,out_features=1)
-mse = nn.MSELoss()
-optimizer = torch.optim.AdamW(model.parameters(),lr = CONFIG["lr"],weight_decay=CONFIG["weight_decay"])
+def evaluate(model, data, loss_fn):
+    """Return (loss, accuracy) of the model on a whole dataset, as plain numbers."""
+    # Hint: under torch.no_grad():
+    #   x = data[:, :2] (the pairs), y = data[:, 2] (the labels)
+    #   logits = model(x)
+    #   loss = loss_fn(logits, y)
+    #   accuracy = (logits.argmax(dim=1) == y).float().mean()
+    #     argmax(dim=1) picks the highest-scoring answer for each row;
+    #     == y gives True/False per row; .float().mean() turns that into a fraction.
+    #   return both with .item()
 
 
-# 5. Training loop over CONFIG["num_epochs"] epochs:
-#    - the usual training step on the train set
-#    - every log_every epochs: compute test loss, then log a row with
-#      epoch, train_loss, test_loss
-#    - every checkpoint_every epochs: save a checkpoint
+# 1. Device: "cuda" if a GPU is available, otherwise "cpu". Print which one.
 
-n_steps = CONFIG["num_epochs"] + 1
-for epoch in range(n_steps):
-    predictions = model(X_train)
-    loss = mse(predictions,y_train)
-    loss.backward()
-    optimizer.step()
-    optimizer.zero_grad()
+# 2. Seed, run folder, save config (same as the dummy run).
 
-    if epoch % CONFIG["log_every"] == 0: # checks if a given epoch is a log epoch, if yes, records metrics
-        with torch.no_grad():
-            test_loss = mse(model(X_test),y_test)      # model on X_test, then mse against y_test
-        row = {"epoch": epoch, "train_loss": loss.item(), "test_loss": test_loss.item()}
-        log_metrics(run_dir,row)           
+# 3. Data: make_data with p and train_frac from CONFIG, then .to(device) on both.
+#    Train DataLoader: DataLoader(train_data, batch_size=..., shuffle=True)
+#    (No test DataLoader needed: evaluate() uses the whole test set at once.)
 
-    if epoch % CONFIG["checkpoint_every"] == 0:
-        save_checkpoint(model,run_dir,epoch)    
+# 4. Model: MLP(...) with sizes from CONFIG, then .to(device).
+#    Loss: nn.CrossEntropyLoss().  Optimizer: AdamW, lr and weight_decay from CONFIG.
 
-
+# 5. Training loop over epochs 0 .. num_epochs (inclusive, as in the dummy run):
+#    a) If a log epoch: evaluate on train and on test, then log a row with
+#       epoch, train_loss, test_loss, train_acc, test_acc.
+#    b) If a checkpoint epoch: save a checkpoint.
+#    c) For each batch from the train DataLoader:
+#         x = batch[:, :2], y = batch[:, 2]
+#         the usual step: forward, loss, backward, step, zero_grad
 
 # 6. Print where the run was saved.
-
-print(f"Run saved to {run_dir}")
