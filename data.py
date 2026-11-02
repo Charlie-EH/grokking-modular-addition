@@ -25,6 +25,9 @@ def make_data(p, train_frac):
     
     return  train_data, test_data
 
+
+# below ensures data generation is correct
+
 if __name__ == "__main__": # runs this code only when file is called directly
     p, train_frac= 53,0.5
     train,test = make_data(p,train_frac)
