@@ -1,24 +1,33 @@
 """
 All the settings for a run, in one place.
 Change numbers here, never inside the other files.
+
+Stage 1 uses the grokking-main MLP settings (a known-good reference).
+For Stage 2, Nanda's transformer uses: p=113, train_frac=0.3, full batch,
+lr=1e-3, weight_decay=1.0, num_epochs=40_000.
 """
 
 CONFIG = {
-# --- Identity of the run ---
-"run_name": "dummy",      # short label; becomes part of the run folder's name
-"seed": 0,                # fixes all randomness, so a run can be repeated exactly
+    # --- Identity of the run ---
+    "run_name": "mlp",
+    "seed": 42,               # same seed as grokking-main
 
-# --- Data ---
-"p": 113,                 # the modulus in (a + b) mod p
-"train_frac": 0.3,        # fraction of all p*p pairs used for training
+    # --- Data ---
+    "p": 53,                  # the modulus in (a + b) mod p
+    "train_frac": 0.5,        # fraction of all p*p pairs used for training
 
-# --- Training ---
-"lr": 1e-3,               # learning rate
-"weight_decay": 1.0,
-"num_epochs": 200,        # tiny for the dummy run; the real Stage 2 run uses 40_000
+    # --- Model ---
+    "d_embed": 128,           # length of each number's embedding vector
+    "d_hidden": 256,          # neurons in the hidden ReLU layer
 
-# --- Saving ---
-"log_every": 10,          # write a row to metrics.csv every N epochs
-"checkpoint_every": 100,  # save the model's weights every N epochs
-"runs_dir": "runs",       # where run folders get created, relative to the project
+    # --- Training ---
+    "batch_size": 64,         # pairs per gradient step
+    "lr": 3e-4,               # learning rate
+    "weight_decay": 1.0,
+    "num_epochs": 20_000,
+
+    # --- Saving ---
+    "log_every": 10,          # write a row to metrics.csv every N epochs
+    "checkpoint_every": 500,  # save the model's weights every N epochs
+    "runs_dir": "runs",
 }
