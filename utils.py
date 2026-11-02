@@ -16,6 +16,13 @@ def set_seed(seed):
     random.seed(seed)        # Python's built-in random numbers
     np.random.seed(seed)     # NumPy's random numbers
     torch.manual_seed(seed)  # PyTorch's random numbers (CPU and GPU)
+        
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True # make gpu do repeatable maths
+        torch.backends.cudnn.benchmark = False # prevent randomization
+
 
 def make_run_dir(config):
     """Create a new, unique folder for this run and return its path."""
