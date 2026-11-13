@@ -13,7 +13,7 @@ from utils import set_seed, make_run_dir, save_config, log_metrics, save_checkpo
 import argparse
 
 
-def parse_overrides(config):
+def parse_overrides(config): # note this cannot handle bouleans
     """Let any CONFIG setting be overridden from the command line, e.g. --seed 1."""
     parser = argparse.ArgumentParser()
     for key, value in config.items():

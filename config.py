@@ -9,7 +9,7 @@ lr=1e-3, weight_decay=1.0, num_epochs=40_000.
 
 CONFIG = {
     # --- Identity of the run ---
-    "run_name": "mlp_wd0",
+    "run_name": "mlp",
     "seed": 42,               # same seed as grokking-main
 
     # --- Data ---
@@ -23,7 +23,7 @@ CONFIG = {
     # --- Training ---
     "batch_size": 64,         # pairs per gradient step
     "lr": 3e-4,               # learning rate
-    "weight_decay": 0.0,
+    "weight_decay": 1.0,
     "num_epochs": 20_000,
 
     # --- Saving ---
