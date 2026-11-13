@@ -10,6 +10,18 @@ from config import CONFIG
 from data import make_data
 from model import MLP
 from utils import set_seed, make_run_dir, save_config, log_metrics, save_checkpoint
+import argparse
+
+
+def parse_overrides(config):
+    """Let any CONFIG setting be overridden from the command line, e.g. --seed 1."""
+    parser = argparse.ArgumentParser()
+    for key, value in config.items():
+        parser.add_argument(f"--{key}", type=type(value), default=value)
+    return vars(parser.parse_args())
+
+
+CONFIG = parse_overrides(CONFIG)
 
 
 def evaluate(model, data, loss_fn):
