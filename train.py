@@ -6,22 +6,58 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from config import CONFIG
+from config import PRESETS
 from data import make_data
 from model import MLP
 from utils import set_seed, make_run_dir, save_config, log_metrics, save_checkpoint
 import argparse
+import sys
 
 
-def parse_overrides(config): # note this cannot handle bouleans
-    """Let any CONFIG setting be overridden from the command line, e.g. --seed 1."""
+def int_or_none(text):
+    """Read a batch size from the command line: a whole number, or 'none' for full batch."""
+    if text.lower() == "none":
+        return None
+    return int(text)
+
+
+def parse_config(): # note this cannot handle booleans
+    """Pick a preset with --preset, then let any setting be overridden, e.g. --seed 1."""
+    # Step 1: read only --preset, ignoring everything else for now.
+    pre = argparse.ArgumentParser(add_help=False)
+    pre.add_argument("--preset", choices=list(PRESETS), default="mlp")
+    preset_name = pre.parse_known_args()[0].preset
+
+    # Step 2: one --key option for every setting found in any preset.
     parser = argparse.ArgumentParser()
-    for key, value in config.items():
-        parser.add_argument(f"--{key}", type=type(value), default=value)
-    return vars(parser.parse_args())
+    parser.add_argument("--preset", choices=list(PRESETS), default="mlp",
+                        help="which set of starting values to use (default: mlp)")
+    all_keys = []
+    for preset in PRESETS.values():
+        for key in preset:
+            if key not in all_keys:
+                all_keys.append(key)
+    for key in all_keys:
+        values = {name: preset.get(key, "-") for name, preset in PRESETS.items()}
+        if key == "batch_size":
+            value_type = int_or_none
+        else:
+            value_type = next(type(v) for v in values.values() if v not in (None, "-"))
+        parser.add_argument(f"--{key}", type=value_type, default=argparse.SUPPRESS,
+                            help=", ".join(f"{n}: {v}" for n, v in values.items()))
+    overrides = vars(parser.parse_args())
+    overrides.pop("preset")
+
+    # Step 3: start from the chosen preset, then apply what was typed.
+    config = dict(PRESETS[preset_name])
+    config.update(overrides)
+    return config
 
 
-CONFIG = parse_overrides(CONFIG)
+CONFIG = parse_config()
+
+if CONFIG["model"] == "transformer":
+    sys.exit("Transformer model not implemented yet (Stage 2 step 3)")
 
 
 def evaluate(model, data, loss_fn):
@@ -57,7 +93,8 @@ train_data = train_data.to(device)
 test_data = test_data.to(device)
 
 
-train_loader = DataLoader(train_data, batch_size=CONFIG["batch_size"], shuffle=True)
+batch_size = CONFIG["batch_size"] or len(train_data)  # None means full batch
+train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
 #test_loader = torch.utils.data.DataLoader(test_data, batch_size=CONFIG["batch_size"], shuffle=False)
 # above not included because evaluate() uses whole test set at once
 
@@ -65,7 +102,8 @@ train_loader = DataLoader(train_data, batch_size=CONFIG["batch_size"], shuffle=T
 model = MLP(CONFIG["p"],CONFIG["d_embed"],CONFIG["d_hidden"])
 model.to(device)
 loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.AdamW(model.parameters(),lr=CONFIG["lr"],weight_decay=CONFIG["weight_decay"])
+optimizer = torch.optim.AdamW(model.parameters(),lr=CONFIG["lr"],weight_decay=CONFIG["weight_decay"],
+                              betas=(CONFIG["beta1"], CONFIG["beta2"]))
 
 
 # 5. Training loop
