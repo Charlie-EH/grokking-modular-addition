@@ -7,13 +7,16 @@ import torch
 import numpy as np
 
 
-def make_data(p, train_frac):
+def make_data(p, train_frac, eq_token=False):
     '''Return (train, test) tensors of shape (N, 3); columns are a, b, (a + b) % p'''
 
     data = []
     for i in range(p):
         for j in range(p):
-            data.append([i,j,(i+j)%p]) # structured such that i and j are input data and this column is label (the result of the sum)
+            if eq_token==False:
+                data.append([i,j,(i+j)%p]) # structured such that i and j are input data and this column is label (the result of the sum)
+            else:
+                data.append([i,j,p,(i+j)%p])
     data = np.array(data)
 
     # split data
@@ -29,22 +32,35 @@ def make_data(p, train_frac):
 # below ensures data generation is correct
 
 if __name__ == "__main__": # runs this code only when file is called directly
-    p, train_frac= 53,0.5
-    train,test = make_data(p,train_frac)
+    
+    def check(p,train_frac,eq_token):
 
-    # 1. Shapes
-    n_train = int(p * p * train_frac)
-    assert train.shape == (n_train, 3), train.shape
-    assert test.shape == (p * p - n_train, 3), test.shape
 
-    # 2. Labels are right
-    for split in (train, test):
-        assert ((split[:, 0] + split[:, 1]) % p == split[:, 2]).all()
+        train,test = make_data(p,train_frac,eq_token)
 
-    # 3. No overlap, nothing missing
-    train_ids = set((train[:, 0] * p + train[:, 1]).tolist())
-    test_ids = set((test[:, 0] * p + test[:, 1]).tolist())
-    assert len(train_ids & test_ids) == 0          # no pair in both
-    assert len(train_ids | test_ids) == p * p      # every pair present
+        n_cols = 4 if eq_token == True else 3
 
-    print("All checks passed")
+        # 1. Shapes
+        n_train = int(p * p * train_frac)
+        assert train.shape == (n_train, n_cols), train.shape
+        assert test.shape == (p * p - n_train, n_cols), test.shape
+
+        # 2. Labels are right
+        for split in (train, test):
+            assert ((split[:, 0] + split[:, 1]) % p == split[:, -1]).all()
+
+        # 3. column 2 == p i.e check the "=" is in vocab
+        if eq_token == True:
+            for split in (train,test):
+                assert (split[:,2] == p).all()
+
+        # 4. No overlap, nothing missing
+        train_ids = set((train[:, 0] * p + train[:, 1]).tolist())
+        test_ids = set((test[:, 0] * p + test[:, 1]).tolist())
+        assert len(train_ids & test_ids) == 0          # no pair in both
+        assert len(train_ids | test_ids) == p * p      # every pair present
+        print(f"ok: p={p}, eq_token={eq_token}, train={len(train)}, test={len(test)}")
+
+    torch.manual_seed(0)
+    check(53,0.5,eq_token=False) #tests MLP on base parameters
+    check(113,0.3,eq_token=True) #tests transformer on base settings

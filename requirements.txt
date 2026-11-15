@@ -19,6 +19,7 @@ cuda-toolkit==13.0.3.0
 cycler==0.12.1
 debugpy==1.8.22
 defusedxml==0.7.1
+einops==0.8.2
 executing==2.3.0
 fastjsonschema==2.22.2
 filelock==4.2.4
