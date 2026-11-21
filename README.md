@@ -1,6 +1,6 @@
 # Grokking modular addition: MLP and Transformer Reproductions
 
-Reproduction the 'grokking' phenomenon from Power et al 2022 — followed by analysis using techniques in mechanistic interpretablity following Nanda et al 2023 
+Reproduction of the 'grokking' phenomenon from Power et al 2022 — followed by analysis using techniques in mechanistic interpretablity following Nanda et al 2023 
 
 'grokking': models abruptly transition to a generalizing solution after a large number of training steps, despite initially overfitting (Power et al 2022)
 
