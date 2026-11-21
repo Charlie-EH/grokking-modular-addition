@@ -1,14 +1,14 @@
-# Grokking modular addition: MLP and Transformer Reproductions
+# Grokking on modular addition: MLP and Transformer Reproductions
 
-Reproduction of the 'grokking' phenomenon from Power et al 2022 — followed by analysis using techniques in mechanistic interpretablity following Nanda et al 2023 
+Reproduction of the 'grokking' phenomenon from Power et al 2022 — followed by analysis using techniques in mechanistic interpretability following Nanda et al 2023 
 
 'grokking': models abruptly transition to a generalizing solution after a large number of training steps, despite initially overfitting (Power et al 2022)
 
-Please Note: This repo is still a work in progress — the transformer model is now written but train.py needs updating before the mechanistic interpretablity steps begin.
+Please Note: This repo is still a work in progress — the transformer model is now written but train.py needs updating before the mechanistic interpretability steps begin.
 
 **Status:** Grokking MLP — complete. One-layer transformer reproduction of Nanda et al. — in progress.
 
-## MLP grokking on modular addition task:
+## MLP grokking on modular addition:
 
 ![Train and test accuracy with weight decay 1, and the weight-decay-0 control](analysis/figures/stage1_grokking_vs_control.png)
 
@@ -22,12 +22,19 @@ With weight decay 0 it never generalises in 20,000 epochs.
 | 42 / 0 / 1 | 180 / 180 / 190 | 990 / 980 / 1,040 |
 | 42, weight decay 0 | — | never |
 
+## What the MLP learned: numbers on a clock
 
-<details><summary>More figures</summary>
+![PCA of the learned number embeddings](analysis/figures/stage1_embedding_pca.png)
+
+After training, each number's learned embedding lies on a circle in pairs of principal components (PC1–2, PC3–4, PC5–6). The numbers are not in order 0, 1, 2, … around each circle. Going round PC1–2 reads 0, 15, 30, 45, 7, 22, …, that is, steps of 15 mod 53, and each pair of components uses a different step. This is consistent with the network representing each number n as an angle proportional to k·n mod 53 for a few frequencies k. That is the kind of representation Nanda et al. found in a transformer, where adding a and b becomes combining two rotations.
+
+![Embeddings projected onto the final PC1–2 during training](analysis/figures/stage1_embedding_evolution.png)
+
+The ring forms during training. At initialisation the embeddings are a random cloud. By epoch 1,000, when test accuracy jumps, they lie on a ring, which is sharpest by epoch 20,000. Next step: a Fourier transform of the embedding matrix, to confirm which frequencies the network uses.
+
+<details><summary>Seed comparison</summary>
 
 ![Test accuracy for seeds 42, 0 and 1](analysis/figures/stage1_seeds.png)
-
-![PCA of the learned number embeddings (the "clock")](analysis/figures/stage1_embedding_pca.png)
 
 </details>
 
@@ -46,7 +53,7 @@ python train.py --help                              # list every setting you can
 I come from scientific computing (single-script projects), and used this project to learn
 software-engineering practice. I used Claude as a tutor and code reviewer: it assessed an earlier
 project of mine, suggested the repo structure, explained concepts, reviewed my code, and wrote
-boilerplate (command-line options, config presets, plotting helpers) and parts of the tests.
+boilerplate (command-line options, config presets, plotting helpers) and parts of the self-checks at the bottom of each file.
 The core ML code (data.py, model.py, train.py, transformer.py) is my own, written with the
 reference implementations below to check against. Results were verified with sanity checks
 (initial loss ≈ ln p, disjoint train/test splits, parameter counts, a deterministic rerun).
