@@ -35,10 +35,10 @@ With weight decay 0 it never generalises in 20,000 epochs.
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
-python train.py                                            # main run: weight decay 1, seed 42
+python train.py                                  # main run: weight decay 1, seed 42
 python train.py --weight_decay 0 --run_name mlp_wd0        # control: no weight decay
-for seed in 42 0 1; do python train.py --seed $seed --run_name mlp_s$seed; done  # seed sweep
-python train.py --help                                     # list every setting you can override
+for seed in 0 1; do python train.py --seed $seed; done     # seed sweep (main run is seed 42)
+python train.py --help                              # list every setting you can override
 ```
 
 ## How this was built
