@@ -1,27 +1,27 @@
-# <!-- TODO (Edward): project title --> grokking-modular-addition
+# Grokking modular addition: MLP and Transformer Reproductions
 
-<!-- TODO (Edward): one-line summary that also says what grokking is (fold your "What is grokking?" sentences in here). -->
+Reproduction the 'grokking' phenomenon from Power et al 2022 — followed by analysis using techniques in mechanistic interpretablity following Nanda et al 2023 
 
-<!--
-Suggested one-liners:
-1. Reproducing grokking (a network suddenly generalising long after it has memorised its training data) on modular addition: first with an MLP, then with the one-layer transformer of Nanda et al. (2023).
-2. Grokking from scratch: a small MLP memorises (a + b) mod 53 by epoch ~180, then suddenly generalises around epoch ~1,000, but only with weight decay.
--->
+'grokking': models abruptly transition to a generalizing solution after a large number of training steps, despite initially overfitting (Power et al 2022)
 
-## Stage 1 result: an MLP groks modular addition
+Please Note: This repo is still a work in progress — the transformer model is now written but train.py needs updating before the mechanistic interpretablity steps begin.
+
+**Status:** Grokking MLP — complete. One-layer transformer reproduction of Nanda et al. — in progress.
+
+## MLP grokking on modular addition task:
 
 ![Train and test accuracy with weight decay 1, and the weight-decay-0 control](analysis/figures/stage1_grokking_vs_control.png)
 
-<!-- TODO (Edward): your claim and its caveats. -->
+A one-hidden-layer MLP (128-d embedding → 256 ReLU → 53 logits), trained on (a + b) mod 53
+with half of all pairs, memorises the training set by epoch ~185 but only generalises
+(test accuracy ≥ 99%) at epochs 980–1,040, about five times later, across three seeds.
+With weight decay 0 it never generalises in 20,000 epochs.
 
-<!--
-Raw material: p = 53, 50% train, embed 128, hidden 256, batch 64, AdamW lr 3e-4,
-weight decay 1, 20k epochs. Memorised (train acc ≥ 99%) at epochs 180 / 180 / 190,
-generalised (test acc ≥ 99%) at 990 / 980 / 1,040 for seeds 42 / 0 / 1.
-Weight decay 0 never generalised in 20k epochs.
-Caveats: ±10 epochs (logging interval); 99% threshold; only 3 seeds;
-the seed sets both the initialisation and the train/test split.
--->
+| Seed | Memorised (train ≥ 99%) | Generalised (test ≥ 99%) |
+|---|---|---|
+| 42 / 0 / 1 | 180 / 180 / 190 | 990 / 980 / 1,040 |
+| 42, weight decay 0 | — | never |
+
 
 <details><summary>More figures</summary>
 
@@ -37,33 +37,23 @@ the seed sets both the initialisation and the train/test split.
 python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 python train.py                                            # main run: weight decay 1, seed 42
 python train.py --weight_decay 0 --run_name mlp_wd0        # control: no weight decay
-for seed in 42 0 1; do python train.py --seed $seed; done  # seed sweep
-python train.py --preset mlp --lr 1e-3 --batch_size none   # --preset <name>, then --key value overrides
+for seed in 42 0 1; do python train.py --seed $seed --run_name mlp_s$seed; done  # seed sweep
+python train.py --help                                     # list every setting you can override
 ```
-
-**Status:** Stage 0 skeleton ✅ · 1 MLP grokking ✅ · 2 transformer reproduction of Nanda et al. 2023 (in progress) · 3 controls and sweeps · 4 mechanistic analysis · 5 progress measures
-
-## Repo layout
-
-```
-config.py                # all settings, as presets (--preset mlp | transformer)
-train.py, data.py, model.py, transformer.py, utils.py
-analysis/                # notebooks and figures/
-runs/                    # created by train.py; git-ignored
-```
-<!-- TODO (Edward): one-line description of analysis/plot_curves.ipynb (or delete this TODO if the layout doesn't list notebooks). -->
 
 ## How this was built
 
-<!-- TODO (Edward): your note on how you used AI in this project. -->
-
-<!--
-Prompts: What did I write myself? What did AI write (which files, which tool)?
-How did I check it (reading every line, epoch-0 loss ≈ ln 53, comparing with the reference notebook, re-running)?
--->
+I come from scientific computing (single-script projects), and used this project to learn
+software-engineering practice. I used Claude as a tutor and code reviewer: it assessed an earlier
+project of mine, suggested the repo structure, explained concepts, reviewed my code, and wrote
+boilerplate (command-line options, config presets, plotting helpers) and parts of the tests.
+The core ML code (data.py, model.py, train.py, transformer.py) is my own, written with the
+reference implementations below to check against. Results were verified with sanity checks
+(initial loss ≈ ln p, disjoint train/test splits, parameter counts, a deterministic rerun).
 
 ## References
 
 - Power et al. (2022). *Grokking: Generalization Beyond Overfitting on Small Algorithmic Datasets.* [arXiv:2201.02177](https://arxiv.org/abs/2201.02177)
 - Nanda et al. (2023). *Progress measures for grokking via mechanistic interpretability.* [arXiv:2301.05217](https://arxiv.org/abs/2301.05217)
-- grokking-main reference notebook (source of the Stage 1 MLP settings). <!-- TODO (Edward): add its URL. -->
+- scienceetonnante, *grokking*: MLP reproduction of grokking on modular addition
+  (reference for Stage 1): https://github.com/scienceetonnante/grokking
