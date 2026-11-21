@@ -2,3 +2,4 @@ runs/
 __pycache__/
 .venv/
 notes_draft.md
+analysis/stage2_einsum_practice.ipynb
