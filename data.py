@@ -1,6 +1,6 @@
 """
 This file contains code to build the relevant grokking dataset for addition modulo P split - as per the power paper
-- randomly into train and test sets including dataloaders and batch size for complete definition of the dataset
+- randomly into train and test sets for complete definition of the dataset
 """
 
 import torch
@@ -8,7 +8,7 @@ import numpy as np
 
 
 def make_data(p, train_frac, eq_token=False):
-    '''Return (train, test) tensors of shape (N, 3); columns are a, b, (a + b) % p'''
+    '''Return (train, test) tensors of shape [a, b, label] or [a, b, p, labl] wiht eq_token=True'''
 
     data = []
     for i in range(p):
@@ -61,6 +61,6 @@ if __name__ == "__main__": # runs this code only when file is called directly
         assert len(train_ids | test_ids) == p * p      # every pair present
         print(f"ok: p={p}, eq_token={eq_token}, train={len(train)}, test={len(test)}")
 
-    torch.manual_seed(0)
+    np.random.seed(0)
     check(53,0.5,eq_token=False) #tests MLP on base parameters
     check(113,0.3,eq_token=True) #tests transformer on base settings
